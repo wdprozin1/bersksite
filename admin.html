@@ -1,1 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Admin - Bersks Scripts</title>
+<style>
+body { margin: 0; font-family: Arial, sans-serif; background-color: #000; color: #fff; }
+header { background: linear-gradient(135deg,#1a001a,#4b0082); padding:20px; text-align:center; font-size:28px; font-weight:bold; border-radius:0 0 14px 14px; box-shadow:0 4px 10px rgba(75,0,130,0.6); letter-spacing:1px; }
+nav { display:flex; justify-content:center; background:#111; margin:20px auto; width:95%; border-radius:14px; overflow:hidden; box-shadow:0 2px 6px rgba(75,0,130,0.6); }
+nav a { flex:1; text-align:center; padding:15px 0; text-decoration:none; color:#ddd; font-weight:bold; position:relative; transition:color 0.3s; }
+nav a::after { content:''; position:absolute; width:0; height:3px; background:#b266ff; left:50%; bottom:0; transition:0.3s; transform:translateX(-50%); }
+nav a:hover::after, nav a.active::after { width:80%; }
+nav a:hover, nav a.active { color:#fff; }
+.content { padding:25px; max-width:95%; margin:auto; }
+.tab { background:#111; padding:20px; border-radius:14px; box-shadow:0 2px 10px rgba(75,0,130,0.7); border:1px solid #4b0082; margin-bottom:20px; }
+h2 { color:#b266ff; font-size:24px; margin-top:0; }
+input, button, textarea { width:100%; padding:10px; margin-top:10px; border-radius:8px; border:1px solid #4b0082; background:#000; color:#fff; }
+button { cursor:pointer; background:#4b0082; font-weight:bold; transition:0.3s; }
+button:hover { background:#b266ff; }
+ul { list-style:none; padding:0; margin:5px 0 15px 0; }
+li { margin:8px 0; }
+li a { color:#fff; text-decoration:none; font-size:16px; transition:color 0.3s; }
+li a:hover { color:#b266ff; }
+.hidden { display:none; }
+.red { color:#ff4d4d; font-weight:bold; }
+@media (max-width:768px){nav{flex-direction:column;} nav a{padding:12px 0;}}
+</style>
+</head>
+<body>
 
+<header>Painel Admin - Bersks Scripts</header>
+
+<!-- Login -->
+<div id="loginTab" class="content tab">
+  <h2>Login Admin</h2>
+  <input type="text" id="adminUser" placeholder="Usuário">
+  <input type="password" id="adminPass" placeholder="Senha">
+  <button onclick="loginAdmin()">Entrar</button>
+  <p id="loginError" class="red hidden">Usuário ou senha incorretos!</p>
+</div>
+
+<div id="adminPanel" class="hidden">
+  <nav>
+    <a href="#" class="active" onclick="showTab('noticiasTab', this)">Notícias</a>
+    <a href="#" onclick="showTab('executoresTab', this)">Executores</a>
+    <a href="#" onclick="showTab('scriptsTab', this)">Scripts</a>
+  </nav>
+
+  <div class="content">
+    <!-- Notícias -->
+    <div id="noticiasTab" class="tab">
+      <h2>Gerenciar Notícias</h2>
+      <textarea id="novaNoticia" rows="3" placeholder="Digite a notícia aqui..."></textarea>
+      <button onclick="adicionarNoticia()">Adicionar Notícia</button>
+      <ul id="listaNoticias"></ul>
+    </div>
+
+    <!-- Executores -->
+    <div id="executoresTab" class="tab hidden">
+      <h2>Gerenciar Executores</h2>
+      <input type="text" id="nomeExecutor" placeholder="Nome do Executor">
+      <input type="text" id="linkExecutor" placeholder="Link do Executor">
+      <button onclick="adicionarExecutor()">Adicionar Executor</button>
+      <ul id="listaExecutores"></ul>
+    </div>
+
+    <!-- Scripts -->
+    <div id="scriptsTab" class="tab hidden">
+      <h2>Gerenciar Scripts</h2>
+      <input type="text" id="nomeScript" placeholder="Nome do Script">
+      <input type="text" id="linkScript" placeholder="Link do Script">
+      <button onclick="adicionarScript()">Adicionar Script</button>
+      <ul id="listaScripts"></ul>
+    </div>
+  </div>
+</div>
+
+<script>
+// Login simples
+function loginAdmin() {
+  const user = document.getElementById('adminUser').value;
+  const pass = document.getElementById('adminPass').value;
+  if(user === 'admin' && pass === '1234'){
+    document.getElementById('loginTab').classList.add('hidden');
+    document.getElementById('adminPanel').classList.remove('hidden');
+    carregarDados();
+  } else {
+    document.getElementById('loginError').classList.remove('hidden');
+  }
+}
+
+// Navegação entre abas
+function showTab(tabName, element) {
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(tab => tab.classList.add("hidden"));
+  const links = document.querySelectorAll("nav a");
+  links.forEach(link => link.classList.remove("active"));
+  document.getElementById(tabName).classList.remove("hidden");
+  element.classList.add("active");
+}
+
+// Carregar dados do backend
+async function carregarDados() {
+  const res = await fetch('/api/data');
+  const data = await res.json();
+
+  // Notícias
+  const ulNoticias = document.getElementById('listaNoticias');
+  ulNoticias.innerHTML = '';
+  data.noticias.forEach(n => {
+    const li = document.createElement('li');
+    li.textContent = n;
+    ulNoticias.appendChild(li);
+  });
+
+  // Executores
+  const ulExecutores = document.getElementById('listaExecutores');
+  ulExecutores.innerHTML = '';
+  data.executores.forEach(e => {
+    const li = document.createElement('li');
+    li.innerHTML = `<a href="${e.link}" target="_blank">${e.nome}</a>`;
+    ulExecutores.appendChild(li);
+  });
+
+  // Scripts
+  const ulScripts = document.getElementById('listaScripts');
+  ulScripts.innerHTML = '';
+  data.scripts.forEach(s => {
+    const li = document.createElement('li');
+    li.innerHTML = `<a href="${s.link}" target="_blank">${s.nome}</a>`;
+    ulScripts.appendChild(li);
+  });
+}
+
+// Salvar dados
+async function salvarDados(data){
+  await fetch('/api/data',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(data)
+  });
+}
+
+// Adicionar notícia
+async function adicionarNoticia(){
+  const texto = document.getElementById('novaNoticia').value;
+  if(!texto) return;
+  const res = await fetch('/api/data');
+  const data = await res.json();
+  data.noticias.push(texto);
+  await salvarDados(data);
+  document.getElementById('novaNoticia').value='';
+  carregarDados();
+}
+
+// Adicionar executor
+async function adicionarExecutor(){
+  const nome = document.getElementById('nomeExecutor').value;
+  const link = document.getElementById('linkExecutor').value;
+  if(!nome||!link) return;
+  const res = await fetch('/api/data');
+  const data = await res.json();
+  data.executores.push({nome,link});
+  await salvarDados(data);
+  document.getElementById('nomeExecutor').value='';
+  document.getElementById('linkExecutor').value='';
+  carregarDados();
+}
+
+// Adicionar script
+async function adicionarScript(){
+  const nome = document.getElementById('nomeScript').value;
+  const link = document.getElementById('linkScript').value;
+  if(!nome||!link) return;
+  const res = await fetch('/api/data');
+  const data = await res.json();
+  data.scripts.push({nome,link});
+  await salvarDados(data);
+  document.getElementById('nomeScript').value='';
+  document.getElementById('linkScript').value='';
+  carregarDados();
+}
+</script>
+
+</body>
+</html>
